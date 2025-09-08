@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      Int       @id @default(autoincrement())
+  email                   String    @unique
+  name                    String   @db.VarChar(100)
+  address                 String   @db.VarChar(400)
+  role                    Role      @default(USER)
+  profileImage            String?   @db.VarChar(255)
+  isEmailVerified         Boolean   @default(false)
+  verificationToken       String?   @db.VarChar(255)
+  verificationTokenExpiry DateTime?
+  temporaryToken          String?   @db.VarChar(255)
+  temporaryTokenExpiry    DateTime?
+  reviews                 Review[]
+  password                String    @db.VarChar(100)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  Store                   Store[]
+}
+
+enum Role {
+  USER 
+  ADMIN
+  STORE_OWNER 
+}
+enum StoreStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Store {
+  id               Int      @id @default(autoincrement())
+  name             String   @db.VarChar(100)
+  address          String?  @db.VarChar(400)
+  overallRating    Float?   @default(0)
+  storeImage       String?  @db.VarChar(255)
+  storeOwner       User     @relation(fields: [storeOwnerId], references: [id])
+  storeOwnerId     Int
+  status           StoreStatus   @default(PENDING) 
+  description      String?  @db.VarChar(1000)
+  reviews          Review[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  rating    Int      @db.SmallInt
+  comment   String?  @db.VarChar(1000)
+  user      User     @relation(fields: [userId], references: [id],onDelete: Cascade)
+  userId    Int
+  store     Store    @relation(fields: [storeId], references: [id],onDelete: Cascade)
+  storeId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, storeId])
+}
