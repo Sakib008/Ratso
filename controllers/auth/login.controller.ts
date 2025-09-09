@@ -2,7 +2,7 @@ import prisma from "../../prismaClient.js";
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 
-const loginUser = async (req:Request, res:Response) => {
+export const loginUser = async (req:Request, res:Response) => {
     const { email, password } = req.body;
     try {
         if (!email || !password) {
@@ -28,4 +28,4 @@ const loginUser = async (req:Request, res:Response) => {
     }
 };
 
-export default loginUser;
+
