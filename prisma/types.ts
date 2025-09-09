@@ -50,3 +50,9 @@ export enum Role {
     ADMIN = 'ADMIN',
     STORE_OWNER = 'STORE_OWNER'
 }
+
+export enum StoreStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
