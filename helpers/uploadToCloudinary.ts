@@ -2,8 +2,6 @@ import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier"
 import type { ApiResponse } from "../Types/apiResponse.js";
 
-
-
 const uploadToCloudinary = (buffer: Buffer): Promise<ApiResponse> => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(

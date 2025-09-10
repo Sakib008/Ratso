@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { Resend } from "resend";
-import ResetPassword from "./email/ResetPassword.jsx";
+import ResetPassword from "./email/ResetPassword.js";
 import type { ApiResponse } from "../Types/apiResponse.js";
 const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendResetPassword = async (email:string,name: string, tokenLink: string):Promise<ApiResponse> =>{

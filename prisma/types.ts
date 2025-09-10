@@ -1,8 +1,8 @@
 export type User = {
   id: number;
   email: string;
-  name?: string | null;
-  address?: string | null;
+  name: string ;
+  address: string;
   role: "USER" | "ADMIN" | "STORE_OWNER";
   profileImage?: string | null;
   isEmailVerified: boolean;

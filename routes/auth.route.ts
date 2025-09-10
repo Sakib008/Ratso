@@ -1,3 +1,5 @@
+import express from "express";
+
 import {
   createUserRequest,
   verifyToken,
@@ -7,7 +9,6 @@ import {
   resetPassword,
 } from "../controllers/index.js";
 import { authVerify } from "../middleware/auth.middleware.js";
-import express from "express";
 const router = express.Router();
 
 router.post("/signup", createUserRequest);
