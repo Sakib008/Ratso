@@ -1,30 +1,35 @@
 import prisma from "../../prismaClient.js";
-import jwt from "jsonwebtoken";
 import type { Request, Response } from "express";
 import dotenv from "dotenv";
 import { Role } from "../../generated/prisma/index.js";
+import type { Store, User } from "../../prisma/types.js";
 dotenv.config();
 
 export const getAllStores = async (req: Request, res: Response) => {
-    const {page, limit} = req.query;
-    const userId = req.user?.id;
-    if (page && isNaN(Number(page))) {
-        return res.status(400).json({ message: "Invalid page number" });
-    }
-    if (limit && isNaN(Number(limit))) {
-        return res.status(400).json({ message: "Invalid limit number" });
+    interface PageLimit {
+        page?: string;
+        limit?: string;
     }
 
+    const {page = '1', limit= "10"} = req.query as PageLimit;
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    if (isNaN(pageNumber) || isNaN(limitNumber)) {
+        return res.status(400).json({ message: "Invalid page or limit number" });
+    }
+    const {id} = req.user as User;
+
     try {
-        const authorisedUser = await prisma.user.findUnique({
-            where : { id: userId },
+        const authorisedUser : User = await prisma.user.findUnique({
+            where : { id },
             select: { role: true }
         });
         if (!authorisedUser || authorisedUser.role !== Role.ADMIN) {
             return res.status(403).json({ message: "Forbidden: Admins only" });
         }
-        const totalStores = await prisma.store.count();
-      const stores = await prisma.store.findMany({
+        const totalStores : number = await prisma.store.count();
+      const stores : Store[] = await prisma.store.findMany({
         skip: (Number(page) || 1) - 1,
         take: Number(limit) || 10,
        select : {
