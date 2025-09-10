@@ -1,0 +1,6 @@
+{
+  "watch": ["**/*.ts"],
+  "ext": ".ts,.js",
+  "ignore": ["node_modules", "dist"],
+  "exec": "node --import ts-node/register/esm server.ts"
+}
