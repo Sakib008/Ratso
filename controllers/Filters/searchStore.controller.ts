@@ -1,13 +1,14 @@
-import prisma from "../../prismaClient.js";
 import type { Request, Response } from "express";
 
+import prisma from "../../prismaClient.js";
+import type { Store } from "../../prisma/types.js";
 export const searchStore = async (req: Request, res: Response) => {
     try {
         const {search} = req.query;
         if (!search) {
             return res.status(400).json({ message: "Search term is required" });
         }
-        const stores = await prisma.store.findMany({
+        const stores : Store[] = await prisma.store.findMany({
             where: {
                 OR: [
                     { name: { contains: search } },
