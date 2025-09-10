@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 import { Resend } from "resend";
-import VerificationEmail from "./email/VerificationEmail.jsx";
+import VerificationEmail from "./email/VerificationEmail.js";
 import type { ApiResponse } from "../Types/apiResponse.js";
 const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendEmailVerification = async (email:string,name: string, verifyCode: string):Promise<ApiResponse> =>{
