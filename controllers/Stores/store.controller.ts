@@ -1,18 +1,15 @@
 import type { Request, Response } from "express";
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
 dotenv.config();
 import prisma from "../../prismaClient.js";
 import { Role } from "../../generated/prisma/index.js";
 import { uploadToCloudinary } from "../../helpers/uploadToCloudinary.js";
+import { type Store, type User,StoreStatus } from "../../prisma/types.js";
 
-// Single Store
-
-// Get Single Store
 export const getStoreById = async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const id = req.params.id as string;
   try {
-    const store = await prisma.store.findUnique({
+    const store : Store = await prisma.store.findUnique({
       where: { id: Number(id) },
     });
     if (!store) {
@@ -26,22 +23,22 @@ export const getStoreById = async (req: Request, res: Response) => {
 };
 
 export const createStore = async (req: Request, res: Response) => {
-  const userId = req.user?.id;
+  const {id} = req.user as User;
   try {
-    const authorisedUser = await prisma.user.findUnique({
-      where: { id: userId },
+    const authorisedUser : User = await prisma.user.findUnique({
+      where: { id },
       select: { role: true },
     });
     if (
       !authorisedUser ||
-      authorisedUser.role !== Role.ADMIN ||
-      authorisedUser.role !== Role.STORE_OWNER
+      (authorisedUser.role !== Role.ADMIN &&
+      authorisedUser.role !== Role.STORE_OWNER)
     ) {
       return res
         .status(403)
         .json({ message: "Forbidden: Admins and Store Owner only" });
     }
-    const { name, address, storeOwnerId, StoreStatus, description } = req.body;
+    const { name, address, storeOwnerId, status, description } = req.body as Store;
     let storeImageUrl = null;
     if (req.file) {
       const uploadResult = await uploadToCloudinary(req.file.buffer);
@@ -54,7 +51,7 @@ export const createStore = async (req: Request, res: Response) => {
         .status(400)
         .json({ message: "Name, address, storeOwnerId are required" });
     }
-    const existingStore = await prisma.store.findUnique({ where: { name } });
+    const existingStore : Store = await prisma.store.findUnique({ where: { name } });
     if (existingStore) {
       if (existingStore.status === StoreStatus.APPROVED) {
         return res
@@ -131,28 +128,28 @@ export const deleteStore = async (req: Request, res: Response) => {
 export const updateStore = async (req: Request, res: Response) => {
   const userId = req.user?.id;
   try {
-    const authorisedUser = await prisma.user.findUnique({
+    const authorisedUser : User = await prisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
     });
     if (
       !authorisedUser ||
-      authorisedUser.role !== Role.ADMIN ||
-      authorisedUser.role !== Role.STORE_OWNER
+     ( authorisedUser.role !== Role.ADMIN &&
+      authorisedUser.role !== Role.STORE_OWNER)
     ) {
       return res.status(403).json({ message: "Forbidden: Admins only" });
     }
     const { id } = req.query;
-    if (!id || !Number(id)) {
+    if (!id || isNaN(Number(id))) {
       return res.status(400).json({ message: "Id is required" });
     }
-    const store = await prisma.store.findUnique({
+    const store : Store = await prisma.store.findUnique({
       where: { id: Number(id) },
     });
     if (!store) {
       return res.status(404).json({ message: "Store not found" });
     }
-    const updateData = await prisma.store.update({
+    const updateData : Store = await prisma.store.update({
       where: { id: Number(id) },
       data: req.body,
     });
@@ -161,9 +158,6 @@ export const updateStore = async (req: Request, res: Response) => {
       .json({ message: "Store status updated successfully", updateData });
   } catch (error) {
     console.error("Error during store status update:", error);
-    if (error instanceof jwt.JsonWebTokenError) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
     res.status(500).json({ message: "Internal server error" });
   }
 };
