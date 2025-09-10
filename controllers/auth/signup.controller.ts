@@ -1,8 +1,12 @@
 import prisma from "../../prismaClient.js";
 import bcrypt from "bcryptjs";
+import cookie from "cookiejs";
+import type { User } from "../../prisma/types.js";
 import type { Request, Response } from "express";
+
 import { uploadToCloudinary } from "../../helpers/uploadToCloudinary.js";
 import { sendEmailVerification } from "../../helpers/sendEmailVerification.js";
+import { generateToken } from "../../helpers/generateJwtToken.js";
 
 export const createUserRequest = async (req: Request, res: Response) => {
   const {
@@ -13,7 +17,7 @@ export const createUserRequest = async (req: Request, res: Response) => {
     verificationTokenExpiry,
     email,
     password,
-  } = req.body;
+  } : User = req.body;
   try {
     let profileImageUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`;
     if (req.file) {
@@ -25,7 +29,7 @@ export const createUserRequest = async (req: Request, res: Response) => {
     if (!email || !password || !name || !address) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    const existingUser = await prisma.user.findUnique({ where: { email } });
+    const existingUser : User = await prisma.user.findUnique({ where: { email } });
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
     if (existingUser) {
       if (existingUser.isEmailVerified) {
@@ -79,13 +83,13 @@ export const createUserRequest = async (req: Request, res: Response) => {
 };
 
 
-export const verifyToken = async (req: Request) => {
-  const { email, verificationToken } = req.body;
+export const verifyToken = async (req: Request, res: Response) => {
+  const { email, verificationToken } : User= req.body;
   if (typeof email !== "string" || typeof verificationToken !== "string") {
     return { valid: false, message: "Invalid input" };
   }
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user : User = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return { valid: false, message: "User not found" };
     }
@@ -109,8 +113,15 @@ export const verifyToken = async (req: Request) => {
         verificationTokenExpiry: null,
       },
     });
-    
-    return { valid: true, message: "Email verified successfully" };
+    const token : string = generateToken(user.id);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 24 * 60 * 60 * 1000 
+    });
+    res
+    return { valid: true, message: "Email verified successfully", token };
   } catch (error) {
     console.error("Error during token verification:", error);
     return { valid: false, message: "Internal server error" };
