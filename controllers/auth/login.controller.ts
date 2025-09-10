@@ -1,14 +1,15 @@
 import prisma from "../../prismaClient.js";
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
+import type { User } from "../../prisma/types.js";
 
 export const loginUser = async (req:Request, res:Response) => {
-    const { email, password } = req.body;
+    const { email, password } : User = req.body;
     try {
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
         }
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user : User= await prisma.user.findUnique({ where: { email } });
         if (!user) {
             return res.status(400).json({ message: "Invalid email or password" });
         }
