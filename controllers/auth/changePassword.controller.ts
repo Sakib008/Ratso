@@ -1,10 +1,16 @@
-import prisma from "../../prismaClient.js";
 import bcrypt from "bcryptjs";
 import type { Request, Response } from "express";
 
+import prisma from "../../prismaClient.js";
+import type { User } from "../../prisma/types.js";
 export const changePassword = async (req: Request, res: Response) => {
-    const { currentPassword, newPassword } = req.body;
-    const user = req.user;
+    interface ChangePasswordRequest {
+        currentPassword: string;
+        newPassword: string;
+    }
+    
+    const { currentPassword, newPassword } : ChangePasswordRequest = req.body;
+    const user = req.user as User;
     try {
         if(!currentPassword || !newPassword) {
             return res.status(400).json({ message: "Current password and new password are required" });
