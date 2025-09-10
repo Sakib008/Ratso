@@ -3,17 +3,18 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 dotenv.config();
+import type { User } from "../../prisma/types.js";
 
 import prisma from "../../prismaClient.js";
 import { sendResetPassword } from "../../helpers/sendResetPassword.js";
 
 export const resetPasswordRequest = async (req:Request, res:Response) => {
-    const { email } = req.body;
+    const email : string = req.body.email;
     try {
         if (!email) {
             return res.status(400).json({ message: "Email is required" });
         }
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user : User = await prisma.user.findUnique({ where: { email } });
         if (!user) {
             return res.status(400).json({ message: "User with this email does not exist" });
         }
@@ -26,7 +27,7 @@ export const resetPasswordRequest = async (req:Request, res:Response) => {
         });
         
         const tokenLink = `${process.env.FRONTEND_URL}/reset-password?token=${tempToken}`;
-        const emailResponse = await sendResetPassword(email, user.name, tokenLink);
+        await sendResetPassword(email, user.name, tokenLink);
         return res.status(200).json({ message: "Password reset successful" });
     } catch (error) {
         console.error("Error during password reset:", error);
@@ -35,7 +36,8 @@ export const resetPasswordRequest = async (req:Request, res:Response) => {
 };
 
 export const resetPassword = async (req:Request, res:Response) => {
-    const {newPassword } = req.body;
+
+    const newPassword = req.body.newPassword as string;
     const token = req.query.token as string;
     try {
         if (!token) {
@@ -52,7 +54,7 @@ export const resetPassword = async (req:Request, res:Response) => {
         }
        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string, iat: number, exp: number };
        const userId = decoded.userId;
-       const user = await prisma.user.findUnique({ where: { id: userId } });
+       const user : User = await prisma.user.findUnique({ where: { id: userId } });
          if (!user || user.temporaryToken !== token || !user.temporaryTokenExpiry || user.temporaryTokenExpiry < new Date()) {
             return res.status(400).json({ message: "Invalid or expired reset token" });
         }
