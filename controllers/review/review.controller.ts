@@ -1,30 +1,32 @@
-import prisma from "../../prismaClient.js";
 import jwt from "jsonwebtoken";
 import type { Request, Response } from "express";
 import dotenv from "dotenv";
+
+import prisma from "../../prismaClient.js";
 import { Role } from "../../generated/prisma/index.js";
+import type { Review, User, Store } from "../../prisma/types.js";
 dotenv.config();
 
 export const getAllReviews = async (req: Request, res: Response) => {
-    const {page, limit} = req.query;
-    const userId = req.user?.id;
-    if (page && isNaN(Number(page))) {
-        return res.status(400).json({ message: "Invalid page number" });
-    }
-    if (limit && isNaN(Number(limit))) {
-        return res.status(400).json({ message: "Invalid limit number" });
+    const {page = '1', limit= "10"} = req.query;
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+
+    const userId = req.user?.id as number;
+    if (isNaN(pageNumber) || isNaN(limitNumber)) {
+        return res.status(400).json({ message: "Invalid page or limit number" });
     }
 
     try {
-        const authorisedUser = await prisma.user.findUnique({
+        const authorisedUser : User = await prisma.user.findUnique({
             where : { id: userId },
             select: { role: true }
         });
         if (!authorisedUser || authorisedUser.role !== Role.ADMIN) {
             return res.status(403).json({ message: "Forbidden: Admins only" });
         }
-        const totalReviews = await prisma.review.count();
-      const reviews = await prisma.review.findMany({
+        const totalReviews : number = await prisma.review.count();
+      const reviews : Review[] = await prisma.review.findMany({
         skip: (Number(page) || 1) - 1,
         take: Number(limit) || 10,
        select : {
@@ -44,21 +46,21 @@ export const getAllReviews = async (req: Request, res: Response) => {
 };
 
 export const createReview = async (req: Request, res: Response) => {
-    const user = req.user;
+    const user = req.user as User;
     try {
         if (!user || user.role !== Role.ADMIN && user.role !== Role.USER) {
             return res.status(403).json({ message: "Forbidden: Only User and Admins can create reviews" });
         }
-        const { rating, comment, storeId } = req.body;
+        const { rating, comment, storeId } = req.body as Review;
         if (!rating || !storeId ) {
             return res.status(400).json({ message: "Rating and store ID are required" });
         }
         if (rating < 1 || rating > 5) {
             return res.status(400).json({ message: "Rating must be between 1 and 5" });
         }
-        const store = await prisma.store.findUnique({
+        const store : Store = await prisma.store.findUnique({
             where: { 
-                id: Number(storeId),
+                id: storeId,
             },
             include: {
                 reviews: true
@@ -70,23 +72,23 @@ export const createReview = async (req: Request, res: Response) => {
         if (store.status !== 'APPROVED') {
             return res.status(400).json({ message: "Cannot review a store that is not approved" });
         }
-        const existingReview = await prisma.review.findUnique({
+        const existingReview : Review = await prisma.review.findUnique({
             where: {
                 userId_storeId: {
-                    userId: Number(user.id),
-                    storeId: Number(storeId)
+                    userId: user.id,
+                    storeId
                 }
             }
         });
         if (existingReview) {
             return res.status(400).json({ message: "You have already reviewed this store" });
         }
-        const review = await prisma.review.create({
+        const review : Review = await prisma.review.create({
             data: {
                 rating,
                 comment,
-                userId: Number(user.id),
-                storeId: Number(storeId)
+                userId : user.id,
+                storeId
             },
             include: {
                 user: true,
@@ -104,20 +106,20 @@ export const createReview = async (req: Request, res: Response) => {
 };
 
 export const updateReview = async (req: Request, res: Response) => {
-    const user = req.user;
+    const user = req.user as User;
     try {
         
         if (!user || (user.role !== Role.ADMIN && user.role !== Role.USER)) {
             return res.status(403).json({ message: "Forbidden: Only User and Admins can update reviews" });
         }
-        const { rating, comment, id } = req.body;
+        const { rating, comment, id } : Review = req.body;
         if (!rating || !id ) {
             return res.status(400).json({ message: "Rating and review ID are required" });
         }
         if (rating < 1 || rating > 5) {
             return res.status(400).json({ message: "Rating must be between 1 and 5" });
         }
-        const review = await prisma.review.findUnique({
+        const review : Review = await prisma.review.findUnique({
             where: { 
                 id: Number(id),
             },
@@ -133,7 +135,7 @@ export const updateReview = async (req: Request, res: Response) => {
             return res.status(403).json({ message: "You are not authorized to update this review" });
         }
         const updatedReview = await prisma.review.update({
-            where: { id: Number(id) },
+            where: { id },
             data: {
                 rating,
                 comment
@@ -150,7 +152,7 @@ export const updateReview = async (req: Request, res: Response) => {
 };
 
 export const deleteReview = async (req: Request, res: Response) => {
-   const user = req.user;
+   const user = req.user as User;
     try {
       if (!user || user.role !== Role.ADMIN && user.role !== Role.USER) {
             return res.status(403).json({ message: "Forbidden: Only User and Admins can delete reviews" });
@@ -159,9 +161,9 @@ export const deleteReview = async (req: Request, res: Response) => {
         if (!id ) {
             return res.status(400).json({ message: "Review ID is required" });
         }
-        const review = await prisma.review.findUnique({
+        const review : Review = await prisma.review.findUnique({
             where: { 
-                id: Number(id),
+                id,
             },
             include: {
                 user: true,
@@ -171,15 +173,15 @@ export const deleteReview = async (req: Request, res: Response) => {
         if (!review) {
             return res.status(404).json({ message: "Review not found" });
         }
-        if (review.userId !== Number(user.id)) {
+        if (review.userId !== user.id) {
             return res.status(403).json({ message: "You are not authorized to delete this review" });
         }
-        const reviews = await prisma.review.delete({
-            where: { id: Number(id) }
+        const deletedReview : Review = await prisma.review.delete({
+            where: { id }
         });
         res.status(200).json({
             message: "Review deleted successfully",
-            reviews
+            review : deletedReview
         });
     } catch (error) {
         console.error("Error deleting review:", error);
@@ -191,9 +193,9 @@ export const deleteReview = async (req: Request, res: Response) => {
 };
 
 export const getAllReviewsByStore = async (req: Request, res: Response) => {
-    const user = req.user;
+    const user = req.user as User;
     try {
-     const review = await prisma.review.findMany({
+     const review : Review[] = await prisma.review.findMany({
             where: { 
                 storeId: Number(req.query.storeId),
             },
@@ -202,6 +204,9 @@ export const getAllReviewsByStore = async (req: Request, res: Response) => {
                 store: true
             }
         });
+        if(user.role !== Role.ADMIN){
+            return res.status(403).json({ message: "Forbidden: Only Admins can fetch reviews by store" });
+        }
         if (!review) {
             return res.status(404).json({ message: "Review not found" });
         }  
