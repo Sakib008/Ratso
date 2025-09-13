@@ -4,12 +4,12 @@ import type { Request, Response } from "express";
 import type { User } from "../../prisma/types.js";
 
 export const loginUser = async (req:Request, res:Response) => {
-    const { email, password } : User = req.body;
+    const { email, password } = req.body as User;
     try {
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required" });
         }
-        const user : User= await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { email } }) as User;
         if (!user) {
             return res.status(400).json({ message: "Invalid email or password" });
         }

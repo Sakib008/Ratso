@@ -8,11 +8,14 @@ export const searchStore = async (req: Request, res: Response) => {
         if (!search) {
             return res.status(400).json({ message: "Search term is required" });
         }
-        const stores : Store[] = await prisma.store.findMany({
+        if(typeof search !== "string" || search.trim() === ""){
+            return [];
+        }
+        const stores = await prisma.store.findMany({
             where: {
                 OR: [
-                    { name: { contains: search } },
-                    { address: { contains: search } },
+                    { name: { contains: search ,mode: "insensitive" } },
+                    { address: { contains: search,mode: "insensitive" } },
                 ]
             }
         });

@@ -14,7 +14,7 @@ export const resetPasswordRequest = async (req:Request, res:Response) => {
         if (!email) {
             return res.status(400).json({ message: "Email is required" });
         }
-        const user : User = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { email } }) ;
         if (!user) {
             return res.status(400).json({ message: "User with this email does not exist" });
         }
@@ -53,8 +53,8 @@ export const resetPassword = async (req:Request, res:Response) => {
             return res.status(400).json({ message: "Password must contain 1 uppercase, 1 special, 1 number and minimum 8 character upto max 20" });
         }
        const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as { userId: string, iat: number, exp: number };
-       const userId = decoded.userId;
-       const user : User = await prisma.user.findUnique({ where: { id: userId } });
+       const userId = Number(decoded.userId);
+       const user = await prisma.user.findUnique({ where: { id: userId } });
          if (!user || user.temporaryToken !== token || !user.temporaryTokenExpiry || user.temporaryTokenExpiry < new Date()) {
             return res.status(400).json({ message: "Invalid or expired reset token" });
         }

@@ -29,7 +29,7 @@ export const createUserRequest = async (req: Request, res: Response) => {
     if (!email || !password || !name || !address) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    const existingUser : User = await prisma.user.findUnique({ where: { email } });
+    const existingUser = await prisma.user.findUnique({ where: { email } });
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
     if (existingUser) {
       if (existingUser.isEmailVerified) {
@@ -89,7 +89,7 @@ export const verifyToken = async (req: Request, res: Response) => {
     return { valid: false, message: "Invalid input" };
   }
   try {
-    const user : User = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email } }) as User;
     if (!user) {
       return { valid: false, message: "User not found" };
     }
