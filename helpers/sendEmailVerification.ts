@@ -8,10 +8,11 @@ export const sendEmailVerification = async (email:string,name: string, verifyCod
     try {
         await resend.emails.send({
   from: 'Ratso <onboarding@resend.dev>',
-  to: email,
+  to: [email],
   subject: 'Verification Code | Ratso',
   react: VerificationEmail({ name, otp: verifyCode }),
 });
+
         return {
             success: true,message : "Verification Email Send Successfully "
         }
