@@ -11,9 +11,9 @@ datasource db {
 model User {
   id                      Int       @id @default(autoincrement())
   email                   String    @unique
-  name                    String   @db.VarChar(100)
-  address                 String   @db.VarChar(400)
-  role                    Role      @default(USER)
+  name                    String    @db.VarChar(100)
+  address                 String    @db.VarChar(400)
+  role                    Role      @default(user)
   profileImage            String?   @db.VarChar(255)
   isEmailVerified         Boolean   @default(false)
   verificationToken       String?   @db.VarChar(255)
@@ -28,10 +28,11 @@ model User {
 }
 
 enum Role {
-  USER 
-  ADMIN
-  STORE_OWNER 
+  user
+  admin
+  storeOwner
 }
+
 enum StoreStatus {
   PENDING
   APPROVED
@@ -39,27 +40,27 @@ enum StoreStatus {
 }
 
 model Store {
-  id               Int      @id @default(autoincrement())
-  name             String   @db.VarChar(100)
-  address          String?  @db.VarChar(400)
-  overallRating    Float?   @default(0)
-  storeImage       String?  @db.VarChar(255)
-  storeOwner       User     @relation(fields: [storeOwnerId], references: [id])
-  storeOwnerId     Int
-  status           StoreStatus   @default(PENDING) 
-  description      String?  @db.VarChar(1000)
-  reviews          Review[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id            Int         @id @default(autoincrement())
+  name          String      @db.VarChar(100)
+  address       String?     @db.VarChar(400)
+  overallRating Float?      @default(0)
+  storeImage    String?     @db.VarChar(255)
+  storeOwner    User        @relation(fields: [storeOwnerId], references: [id])
+  storeOwnerId  Int
+  status        StoreStatus @default(PENDING)
+  description   String?     @db.VarChar(1000)
+  reviews       Review[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Review {
   id        Int      @id @default(autoincrement())
   rating    Int      @db.SmallInt
   comment   String?  @db.VarChar(1000)
-  user      User     @relation(fields: [userId], references: [id],onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
-  store     Store    @relation(fields: [storeId], references: [id],onDelete: Cascade)
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   storeId   Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

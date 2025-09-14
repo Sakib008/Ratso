@@ -3,7 +3,7 @@ export type User = {
   email: string;
   name: string ;
   address: string;
-  role: "USER" | "ADMIN" | "STORE_OWNER";
+  role: Role;
   profileImage?: string | null;
   isEmailVerified: boolean;
   verificationToken?: string | null;
@@ -46,9 +46,9 @@ export type Store = {
 };
 
 export enum Role {
-    USER = 'USER',
-    ADMIN = 'ADMIN',
-    STORE_OWNER = 'STORE_OWNER'
+    USER = 'user',
+    ADMIN = 'admin',
+    STORE_OWNER = 'storeOwner'
 }
 
 export enum StoreStatus {
