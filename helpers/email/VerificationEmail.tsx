@@ -11,6 +11,7 @@ const styles = {
   box: {
     margin: '0 auto',
     maxWidth: '600px',
+    padding: '10px',
     backgroundColor: '#ffffff',
     borderRadius: '8px',
     boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
@@ -40,7 +41,6 @@ export default function VerificationEmail({ name, otp }: WelcomeEmailProps) {
   return (
    <Html>
      <Head>
-            <title>
                 <Font fontFamily='Roboto' fallbackFontFamily={'Verdana'} webFont={{
                     url : 'https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap',
                     format : 'woff2'
@@ -48,7 +48,6 @@ export default function VerificationEmail({ name, otp }: WelcomeEmailProps) {
                 fontWeight={400}
                 fontStyle='normal'
                 />
-            </title>
 
             </Head> 
         <Container style={styles.main}>
