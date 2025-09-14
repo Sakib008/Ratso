@@ -3,7 +3,7 @@ import { authVerify } from "../middleware/auth.middleware.js";
 import express from "express";
 const router = express.Router();
 
-router.get('/',authVerify, getAllStores);
+router.get('/', getAllStores);
 router.get('/:id', getStoreById);
 router.post('/', authVerify, createStore);
 router.delete('/:id', authVerify, deleteStore);
