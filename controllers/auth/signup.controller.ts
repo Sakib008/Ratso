@@ -17,7 +17,7 @@ export const createUserRequest = async (req: Request, res: Response) => {
     verificationTokenExpiry,
     email,
     password,
-  } : User = req.body;
+  }: User = req.body;
   try {
     let profileImageUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&size=128`;
     if (req.file) {
@@ -31,26 +31,13 @@ export const createUserRequest = async (req: Request, res: Response) => {
     }
     const existingUser = await prisma.user.findUnique({ where: { email } });
     const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-    if (existingUser) {
-      if (existingUser.isEmailVerified) {
-        return res
-          .status(400)
-          .json({ message: "User already exists with this email" });
-      } else {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        existingUser.password = hashedPassword;
-        existingUser.verificationTokenExpiry = new Date(Date.now() + 3600000);
-        existingUser.verificationToken = verifyCode;
-        existingUser.profileImage = profileImageUrl;
-        await prisma.user.update({
-          where: { email },
-          data: existingUser,
-        });
-      }
+    if (existingUser && existingUser.isEmailVerified) {
+      return res
+        .status(400)
+        .json({ message: "User already exists with this email" });
     } else {
       const hashedPassword = await bcrypt.hash(password, 10);
       const tokenExpiry = new Date(Date.now() + 3600000);
-
       await prisma.user.create({
         data: {
           name,
@@ -66,44 +53,41 @@ export const createUserRequest = async (req: Request, res: Response) => {
     }
     const emailResponse = await sendEmailVerification(email, name, verifyCode);
     if (!emailResponse) {
-        return res
+      return res
         .status(500)
         .json({ message: "Failed to send verification email" });
     }
     console.log("Email sent response:", emailResponse);
-    res
-      .status(201)
-      .json({
-        message: "Otp Sended Successfully.",
-      });
+    res.status(201).json({
+      message: "Otp Sended Successfully.",
+    });
   } catch (error) {
     console.error("Error during user creation:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
-
 export const verifyToken = async (req: Request, res: Response) => {
-  const { email, verificationToken } : User= req.body;
+  const { email, verificationToken }: User = req.body;
   if (typeof email !== "string" || typeof verificationToken !== "string") {
-    return { valid: false, message: "Invalid input" };
+    return res.status(400).json({ valid: false, message: "Invalid input" });
   }
   try {
-    const user = await prisma.user.findUnique({ where: { email } }) as User;
+    const user = (await prisma.user.findUnique({ where: { email } })) as User;
     if (!user) {
-      return { valid: false, message: "User not found" };
+      return res.status(400).json({ valid: false, message: "User not found" });
     }
     if (user.isEmailVerified) {
-      return { valid: false, message: "Email is already verified" };
+      return res.status(400).json({ valid: false, message: "Email is already verified" });
     }
     if (user.verificationToken !== verificationToken) {
-      return { valid: false, message: "Invalid verification token" };
+      return res.status(400).json({ valid: false, message: "Invalid verification token" });
     }
     if (
       user.verificationTokenExpiry &&
       user.verificationTokenExpiry < new Date()
     ) {
-      return { valid: false, message: "Verification token has expired" };
+      return res.status(400).json({ valid: false, message: "Verification token has expired" });
     }
     await prisma.user.update({
       where: { email },
@@ -113,17 +97,17 @@ export const verifyToken = async (req: Request, res: Response) => {
         verificationTokenExpiry: null,
       },
     });
-    const token : string = generateToken(user.id);
-    res.cookie('token', token, {
+    const token: string = generateToken(user.id);
+    res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 24 * 60 * 60 * 1000 
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 15 * 24 * 60 * 60 * 1000,
     });
-    res
-    return { valid: true, message: "Email verified successfully", token };
+    
+    return res.status(201).json({ valid: true, message: "Email verified successfully", token });
   } catch (error) {
     console.error("Error during token verification:", error);
-    return { valid: false, message: "Internal server error" };
+    return res.status(500).json({ valid: false, message: "Internal server error" });
   }
 };
