@@ -28,5 +28,5 @@ app.get('/', (req: Request, res: Response) => {
 
 
 app.listen(process.env.PORT || 3000, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT || 3004}`);
+  console.log(`Server is running on Port : `, process.env.PORT || 3000);
 });
