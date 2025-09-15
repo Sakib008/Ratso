@@ -7,12 +7,11 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendEmailVerification = async (email:string,name: string, verifyCode: string):Promise<ApiResponse> =>{
     try {
         await resend.emails.send({
-  from: 'Ratso <onboarding@resend.dev>',
+  from: 'Ratso <no-reply@mohammadsakib.me>',
   to: [email],
   subject: 'Verification Code | Ratso',
   react: VerificationEmail({ name, otp: verifyCode }),
 });
-
         return {
             success: true,message : "Verification Email Send Successfully "
         }
