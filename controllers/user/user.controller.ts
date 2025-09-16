@@ -49,5 +49,5 @@ export const getMe = async (req: Request, res: Response) => {
     if (!user) {
         return res.status(401).json({ message: "Unauthorized" });
     }
-    res.status(200).json({ message: "User profile fetched successfully", user });
+    res.status(200).json({ message: "Successfully Authorized", user });
 };
