@@ -1,5 +1,4 @@
 import {
-  getMe,
   getAllUsers,
   getUserProfile,
   updateUserProfile,
@@ -7,7 +6,6 @@ import {
 import express from "express";
 const router = express.Router();
 
-router.get("/me", getMe);
 router.get("/:id", getUserProfile);
 router.put("/:id", updateUserProfile);
 router.get("/", getAllUsers);
