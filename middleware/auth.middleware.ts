@@ -31,6 +31,9 @@ export const authVerify = async (
         email: true,
         role: true,
         profileImage: true,
+        isEmailVerified: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
     req.user = user as User;
